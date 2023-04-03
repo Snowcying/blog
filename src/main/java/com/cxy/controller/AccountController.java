@@ -9,7 +9,11 @@ import com.cxy.entity.User;
 import com.cxy.service.UserService;
 import com.cxy.util.JwtUtils;
 import org.apache.shiro.SecurityUtils;
+import org.apache.shiro.authc.IncorrectCredentialsException;
+import org.apache.shiro.authc.UnknownAccountException;
+import org.apache.shiro.authc.UsernamePasswordToken;
 import org.apache.shiro.authz.annotation.RequiresAuthentication;
+import org.apache.shiro.subject.Subject;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.util.Assert;
 import org.springframework.validation.annotation.Validated;
@@ -30,15 +34,21 @@ public class AccountController {
     JwtUtils jwtUtils;
     @PostMapping("/login")
     public Result login(@Validated @RequestBody LoginDto loginDto, HttpServletResponse response) {
+        String username = loginDto.getUsername();
+        String password = loginDto.getPassword();
 
-        User user = userService.getOne(new QueryWrapper<User>().eq("username", loginDto.getUsername()));
+        User user = userService.getOne(new QueryWrapper<User>().eq("username", username));
 
         // 返回 IllegalArgumentException异常，需要去exception添加该异常
-        Assert.notNull(user, "用户不存在");
+//        Assert.notNull(user, "用户不存在");
 
-        if(!user.getPassword().equals(SecureUtil.md5(loginDto.getPassword()))){
-            return Result.fail("密码不正确");
+        if(user==null||!user.getPassword().equals(SecureUtil.md5(password))){
+            return Result.fail(400,"账户或密码有误",null);
         }
+
+//        if(!user.getPassword().equals(SecureUtil.md5(loginDto.getPassword()))){
+//            return Result.fail("密码不正确");
+//        }
         String jwt = jwtUtils.generateToken(user.getId());
 
         response.setHeader("Authorization", jwt);

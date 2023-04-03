@@ -4,9 +4,12 @@ import cn.hutool.http.server.HttpServerRequest;
 import cn.hutool.http.server.HttpServerResponse;
 import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
+import com.baomidou.mybatisplus.extension.api.R;
 import com.cxy.common.lang.Result;
 import com.cxy.util.JwtUtils;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import io.jsonwebtoken.Claims;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.shiro.authc.AuthenticationException;
 import org.apache.shiro.authc.AuthenticationToken;
 import org.apache.shiro.authc.ExpiredCredentialsException;
@@ -21,12 +24,39 @@ import javax.servlet.ServletResponse;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import static cn.hutool.http.ContentType.JSON;
 
+@Slf4j
 @Component
 public class JwtFilter extends AuthenticatingFilter {
 
     @Autowired
     JwtUtils jwtUtils;
+    private static final ObjectMapper MAPPER = new ObjectMapper();
+
+
+//    @Override
+//    protected boolean isAccessAllowed(ServletRequest request, ServletResponse response, Object mappedValue) {
+//        try {
+//            log.info("isAccessAllowed阶段");
+////            //System.out.println("isAccessaLLOWED");
+////            //得到客户端传过来的令牌
+////            String token = ((HttpServletRequest) request).getHeader("token");
+////            //System.out.println("客户端令牌"+token);
+////            //封装
+////            JwtToken jwtToken = new JwtToken(token);
+////            //登录:实际是调用LoginRealm里面doGetAuthenticationInfo
+////            getSubject(request, response).login(jwtToken);
+////            //判断是否有权限
+////            String url = ((HttpServletRequest) request).getRequestURI();
+////            getSubject(request, response).checkPermission(url);
+//
+//            return true;
+//
+//        } catch (Exception e) {
+//            return false;
+//        }
+//    }
 
     @Override
     protected AuthenticationToken createToken(ServletRequest servletRequest, ServletResponse servletResponse) throws Exception {
@@ -49,6 +79,11 @@ public class JwtFilter extends AuthenticatingFilter {
         }else{
             Claims claim = jwtUtils.getClaimByToken(jwt);
             if(claim == null || jwtUtils.isTokenExpired(claim.getExpiration())){
+                Result r=Result.fail(401,"token is out",null);
+                String json = MAPPER.writeValueAsString(r);
+                servletResponse.getWriter().print(json);
+//                servletResponse
+
                 throw new ExpiredCredentialsException("token 失效");
             }
 
@@ -59,7 +94,7 @@ public class JwtFilter extends AuthenticatingFilter {
 
     @Override
     protected boolean onLoginFailure(AuthenticationToken token, AuthenticationException e, ServletRequest request, ServletResponse response) {
-
+        log.info("检查登录");
         HttpServerResponse httpServerResponse=(HttpServerResponse)response;
 
         Throwable throwable = e.getCause() == null ? e : e.getCause();
