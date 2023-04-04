@@ -1,13 +1,8 @@
 package com.cxy.shiro;
 
-import cn.hutool.http.server.HttpServerRequest;
-import cn.hutool.http.server.HttpServerResponse;
-import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
-import com.baomidou.mybatisplus.extension.api.R;
 import com.cxy.common.lang.Result;
 import com.cxy.util.JwtUtils;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import io.jsonwebtoken.Claims;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.shiro.authc.AuthenticationException;
@@ -18,13 +13,11 @@ import org.apache.shiro.web.util.WebUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.web.bind.annotation.RequestMethod;
-
 import javax.servlet.ServletRequest;
 import javax.servlet.ServletResponse;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-
-import static cn.hutool.http.ContentType.JSON;
+import java.io.IOException;
 
 @Slf4j
 @Component
@@ -32,14 +25,12 @@ public class JwtFilter extends AuthenticatingFilter {
 
     @Autowired
     JwtUtils jwtUtils;
-    private static final ObjectMapper MAPPER = new ObjectMapper();
-
-
+//    private static final ObjectMapper MAPPER = new ObjectMapper();
 //    @Override
 //    protected boolean isAccessAllowed(ServletRequest request, ServletResponse response, Object mappedValue) {
 //        try {
 //            log.info("isAccessAllowed阶段");
-////            //System.out.println("isAccessaLLOWED");
+////            //System.out.println("isAccessALLOWED");
 ////            //得到客户端传过来的令牌
 ////            String token = ((HttpServletRequest) request).getHeader("token");
 ////            //System.out.println("客户端令牌"+token);
@@ -59,11 +50,12 @@ public class JwtFilter extends AuthenticatingFilter {
 //    }
 
     @Override
-    protected AuthenticationToken createToken(ServletRequest servletRequest, ServletResponse servletResponse) throws Exception {
+    protected AuthenticationToken createToken(ServletRequest servletRequest, ServletResponse servletResponse)  {
+        log.info("createToken阶段");
 
-        HttpServletRequest request=(HttpServletRequest)servletRequest;
-        String jwt=request.getHeader("Authorization");
-        if(StringUtils.isEmpty(jwt)){
+        HttpServletRequest request = (HttpServletRequest) servletRequest;
+        String jwt = request.getHeader("Authorization");
+        if (StringUtils.isEmpty(jwt)) {
             return null;
         }
 
@@ -72,47 +64,71 @@ public class JwtFilter extends AuthenticatingFilter {
 
     @Override
     protected boolean onAccessDenied(ServletRequest servletRequest, ServletResponse servletResponse) throws Exception {
-        HttpServletRequest request=(HttpServletRequest)servletRequest;
-        String jwt=request.getHeader("Authorization");
-        if(StringUtils.isEmpty(jwt)){
-           return true;
-        }else{
+        log.info("onAccessDenied阶段");
+        HttpServletRequest request = (HttpServletRequest) servletRequest;
+        String jwt = request.getHeader("Authorization");
+        if (StringUtils.isEmpty(jwt)) {
+            return true;
+        } else {
             Claims claim = jwtUtils.getClaimByToken(jwt);
-            if(claim == null || jwtUtils.isTokenExpired(claim.getExpiration())){
-                Result r=Result.fail(401,"token is out",null);
-                String json = MAPPER.writeValueAsString(r);
-                servletResponse.getWriter().print(json);
-//                servletResponse
-
+            if (claim == null || jwtUtils.isTokenExpired(claim.getExpiration())) {
+//                Result r=Result.fail(401,"token is out",null);
+//                String json = MAPPER.writeValueAsString(r);
+//                servletResponse.getWriter().print(json);
+                Result.failReturnJson(401, "token is out", servletResponse);
                 throw new ExpiredCredentialsException("token 失效");
             }
-
-
-            return executeLogin(servletRequest,servletResponse);
+            return executeLogin(servletRequest, servletResponse);
         }
     }
 
+    // 重定向方法解决filter内部不能正确捕捉异常，但是有bug 参见https://blog.csdn.net/m0_67391521/article/details/124343856
+//    @Override
+//    protected boolean executeLogin(ServletRequest request, ServletResponse response) throws Exception {
+//        HttpServletRequest httpServletRequest = (HttpServletRequest) request;
+//        String token = httpServletRequest.getHeader("Authorization");
+//        JwtToken jwtToken = new JwtToken(token);
+//        // 提交给realm进行登入，如果错误他会抛出异常并被捕获
+//        try {
+//            getSubject(request, response).login(jwtToken);
+//        } catch (AuthenticationException e) {
+//            responseError(response,401,e.getMessage());
+//            return false;
+//        }
+//        // 如果没有抛出异常则代表登入成功，返回true
+//        return true;
+//    }
+
+//    private void responseError(ServletResponse response, int code,String message) {
+//        try {
+//            HttpServletResponse httpServletResponse = (HttpServletResponse) response;
+//            //设置编码，否则中文字符在重定向时会变为空字符串
+//            message = URLEncoder.encode(message, "UTF-8");
+//            //如果有项目名称路径记得加上
+////            httpServletResponse.sendRedirect("/filterError/" + code + "/" + message);
+//            httpServletResponse.sendRedirect("/filterError/" + code );
+//
+//        } catch (IOException e1) {
+//            log.error(e1.getMessage());
+//        }
+//    }
+
     @Override
     protected boolean onLoginFailure(AuthenticationToken token, AuthenticationException e, ServletRequest request, ServletResponse response) {
-        log.info("检查登录");
-        HttpServerResponse httpServerResponse=(HttpServerResponse)response;
+        log.info("onLoginFailure阶段");
 
         Throwable throwable = e.getCause() == null ? e : e.getCause();
-        Result result = Result.fail(throwable.getMessage());
-
-        String json = JSONUtil.toJsonStr(result);
         try {
-            httpServerResponse.getWriter().print(json);
-        } catch (Exception ex) {
-
-//            throw new RuntimeException(ex);
+            Result.failReturnJson(400, throwable.getMessage(), response);
+        } catch (IOException ex) {
+            throw new RuntimeException(ex);
         }
-
         return false;
     }
 
     @Override
     protected boolean preHandle(ServletRequest request, ServletResponse response) throws Exception {
+        log.info("preHandle阶段");
 
         HttpServletRequest httpServletRequest = WebUtils.toHttp(request);
         HttpServletResponse httpServletResponse = WebUtils.toHttp(response);

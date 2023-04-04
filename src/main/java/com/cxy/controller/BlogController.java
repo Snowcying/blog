@@ -9,6 +9,7 @@ import com.cxy.common.lang.Result;
 import com.cxy.entity.Blog;
 import com.cxy.service.BlogService;
 import com.cxy.util.ShiroUtil;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.shiro.authz.annotation.RequiresAuthentication;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.util.Assert;
@@ -25,6 +26,7 @@ import java.time.LocalDateTime;
  * @author cxy
  * @since 2023-03-16
  */
+@Slf4j
 @RestController
 //@RequestMapping("/blog")
 public class BlogController {
@@ -52,8 +54,9 @@ public class BlogController {
     @RequiresAuthentication
     @PostMapping("/blog/edit")
     public Result editOrAdd(@Validated @RequestBody Blog blog) {
-        Blog temp = null;
+        Blog temp;
         if(blog.getId() != null) {
+            log.info("editOrAdd");
             temp = blogService.getById(blog.getId());
             // 只能编辑自己的文章
             System.out.println(ShiroUtil.getProfile().getId());

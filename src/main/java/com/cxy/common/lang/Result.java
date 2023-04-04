@@ -1,11 +1,17 @@
 package com.cxy.common.lang;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.Data;
 
+import javax.servlet.ServletResponse;
+import java.io.IOException;
 import java.io.Serializable;
 
 @Data
 public class Result implements Serializable {
+
+    private static final ObjectMapper MAPPER = new ObjectMapper();
     private int code;
     private String msg;
     private Object data;
@@ -59,5 +65,10 @@ public class Result implements Serializable {
         r.setMsg(msg);
         r.setData(data);
         return r;
+    }
+    public static void failReturnJson(int code, String msg, ServletResponse response) throws IOException {
+        Result r=Result.fail(code,msg,null);
+        String json = MAPPER.writeValueAsString(r);
+        response.getWriter().print(json);
     }
 }

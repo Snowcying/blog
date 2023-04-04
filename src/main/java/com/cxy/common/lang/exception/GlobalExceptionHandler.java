@@ -3,7 +3,6 @@ package com.cxy.common.lang.exception;
 import com.cxy.common.lang.Result;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.shiro.ShiroException;
-import org.apache.shiro.authc.ExpiredCredentialsException;
 import org.springframework.http.HttpStatus;
 import org.springframework.validation.BindingResult;
 import org.springframework.validation.ObjectError;
@@ -15,13 +14,6 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 @Slf4j
 @RestControllerAdvice
 public class GlobalExceptionHandler {
-    @ResponseStatus(HttpStatus.BAD_REQUEST)
-    @ExceptionHandler(value = ExpiredCredentialsException.class)
-    public Result handler(ExpiredCredentialsException e) {
-        log.error("token异常：----------------{}", e);
-        return Result.fail(401,e.getMessage(),null);
-    }
-
     @ResponseStatus(HttpStatus.UNAUTHORIZED)
     @ExceptionHandler(value = ShiroException.class)
     public Result handler(ShiroException e) {
