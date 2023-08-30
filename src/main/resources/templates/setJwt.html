@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+    <h1>[[${jwt}]]</h1>
+</head>
+<body>
+
+</body>
+<script th:inline="javascript">
+    // 存储时，要先将对象json化字符串
+    var jwt = [[${jwt}]]
+    if (jwt !== null) {
+        // window.location="http://"+backUrl+"?token="+token;
+        localStorage.setItem("token", jwt);
+    }
+    // http://localhost:8080/sso/loginSuccess/token1/localhost:8081/blogs
+    // http://localhost:8080/sso/loginSuccess/token1/localhost:8081/blog/30
+    // 获取时，要将字符串json化对象
+    // var test= JSON.parse(localStorage.getItem("test"));
+</script>
+</html>

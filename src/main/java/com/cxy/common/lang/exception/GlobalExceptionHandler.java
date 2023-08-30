@@ -1,8 +1,10 @@
 package com.cxy.common.lang.exception;
 
 import com.cxy.common.lang.Result;
+import io.jsonwebtoken.ExpiredJwtException;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.shiro.ShiroException;
+import org.apache.shiro.authc.IncorrectCredentialsException;
 import org.springframework.http.HttpStatus;
 import org.springframework.validation.BindingResult;
 import org.springframework.validation.ObjectError;
@@ -42,6 +44,22 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(value = RuntimeException.class)
     public Result handler(RuntimeException e) {
         log.error("运行时异常：----------------{}", e);
+        return Result.fail(e.getMessage());
+    }
+
+
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    @ExceptionHandler(value = IncorrectCredentialsException.class)
+    public Result handler(IncorrectCredentialsException e) {
+        log.error("非法token：----------------{}", e);
+        return Result.fail(e.getMessage());
+    }
+
+
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    @ExceptionHandler(value = ExpiredJwtException.class)
+    public Result handler(ExpiredJwtException e) {
+        log.error("过期的token：----------------{}", e);
         return Result.fail(e.getMessage());
     }
 

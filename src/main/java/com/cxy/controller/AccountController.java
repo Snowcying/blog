@@ -15,6 +15,7 @@ import org.apache.shiro.authc.UsernamePasswordToken;
 import org.apache.shiro.authz.annotation.RequiresAuthentication;
 import org.apache.shiro.subject.Subject;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.ui.Model;
 import org.springframework.util.Assert;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -23,6 +24,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 
 import javax.servlet.http.HttpServletResponse;
+import java.util.Date;
 
 @RestController
 public class AccountController {
@@ -32,8 +34,9 @@ public class AccountController {
 
     @Autowired
     JwtUtils jwtUtils;
+
     @PostMapping("/login")
-    public Result login(@Validated @RequestBody LoginDto loginDto, HttpServletResponse response) {
+    public Result login(@Validated @RequestBody LoginDto loginDto, HttpServletResponse response, Model model) {
         String username = loginDto.getUsername();
         String password = loginDto.getPassword();
 
@@ -42,17 +45,19 @@ public class AccountController {
         // 返回 IllegalArgumentException异常，需要去exception添加该异常
 //        Assert.notNull(user, "用户不存在");
 
-        if(user==null||!user.getPassword().equals(SecureUtil.md5(password))){
-            return Result.fail(400,"账户或密码有误",null);
+        if (user == null || !user.getPassword().equals(SecureUtil.md5(password))) {
+            return Result.fail(400, "账户或密码有误", null);
         }
 
 //        if(!user.getPassword().equals(SecureUtil.md5(loginDto.getPassword()))){
 //            return Result.fail("密码不正确");
 //        }
-        String jwt = jwtUtils.generateToken(user.getId());
+        String jwt = jwtUtils.generateToken(user.getId(), new Date());
 
         response.setHeader("Authorization", jwt);
         response.setHeader("Access-control-Expose-Headers", "Authorization");
+
+        model.addAttribute("jwt", jwt);
 
         return Result.success(MapUtil.builder()
                 .put("id", user.getId())

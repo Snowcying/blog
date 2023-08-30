@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+    <h1>[[${token}]]</h1>
+    <h1>[[${backUrl}]]</h1>
+</head>
+<body>
+
+</body>
+<script th:inline="javascript">
+    // 存储时，要先将对象json化字符串
+    var token = [[${token}]]
+    var backUrl = [[${backUrl}]]
+    backUrl = "localhost:8081"
+    if (token !== null && backUrl !== null) {
+        localStorage.setItem("token", token);
+        window.location = "http://" + backUrl + "?token=" + token;
+    }
+    // http://localhost:8080/sso/loginSuccess/token1/localhost:8081/blogs
+    // http://localhost:8080/sso/loginSuccess/token1/localhost:8081/blog/30
+
+    // 获取时，要将字符串json化对象
+    // var test= JSON.parse(localStorage.getItem("test"));
+</script>
+</html>

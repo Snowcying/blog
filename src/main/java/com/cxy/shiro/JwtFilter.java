@@ -4,10 +4,12 @@ import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.cxy.common.lang.Result;
 import com.cxy.util.JwtUtils;
 import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.ExpiredJwtException;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.shiro.authc.AuthenticationException;
 import org.apache.shiro.authc.AuthenticationToken;
 import org.apache.shiro.authc.ExpiredCredentialsException;
+import org.apache.shiro.authc.IncorrectCredentialsException;
 import org.apache.shiro.web.filter.authc.AuthenticatingFilter;
 import org.apache.shiro.web.util.WebUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -70,12 +72,18 @@ public class JwtFilter extends AuthenticatingFilter {
         if (StringUtils.isEmpty(jwt)) {
             return true;
         } else {
-            Claims claim = jwtUtils.getClaimByToken(jwt);
+            Claims claim = null;
+            try {
+                claim = jwtUtils.getClaimByToken(jwt);
+            } catch (Exception e) {
+                Result.failReturnJson(401, "token invalid", servletResponse);
+                throw e;
+            }
             if (claim == null || jwtUtils.isTokenExpired(claim.getExpiration())) {
 //                Result r=Result.fail(401,"token is out",null);
 //                String json = MAPPER.writeValueAsString(r);
 //                servletResponse.getWriter().print(json);
-                Result.failReturnJson(401, "token is out", servletResponse);
+                Result.failReturnJson(401, "token 已失效，重新登录", servletResponse);
                 throw new ExpiredCredentialsException("token 失效");
             }
             return executeLogin(servletRequest, servletResponse);

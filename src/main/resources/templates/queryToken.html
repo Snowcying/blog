@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+    <h1>[[${backUrl}]]</h1>
+</head>
+<body>
+
+</body>
+<script th:inline="javascript">
+    let token = localStorage.getItem("token")
+    var backUrl = [[${backUrl}]]
+    if (token == null) {
+        window.location = "http://" + backUrl + "?auth=false"
+    } else {
+        window.location = "http://" + backUrl + "?token=" + token;
+    }
+
+</script>
+</html>

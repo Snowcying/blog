@@ -1,6 +1,8 @@
 package com.cxy.controller;
 
 
+import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+import com.baomidou.mybatisplus.extension.api.R;
 import com.cxy.common.lang.Result;
 import com.cxy.entity.User;
 import com.cxy.service.UserService;
@@ -8,6 +10,8 @@ import org.apache.shiro.authz.annotation.RequiresAuthentication;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 /**
  * <p>
@@ -36,6 +40,17 @@ public class UserController {
             return Result.success(user);
         } else {
             return Result.fail("没有此用户");
+        }
+    }
+
+    @RequiresAuthentication
+    @GetMapping("/all")
+    public Result getAllUser() {
+        List<User> users = userService.list(new QueryWrapper<>());
+        if (users != null) {
+            return Result.success(200, "查询成功", users);
+        } else {
+            return Result.fail("查询失败");
         }
     }
 
